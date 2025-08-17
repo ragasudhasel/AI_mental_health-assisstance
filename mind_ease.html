@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindEase - AI Mental Health Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #6366f1;
+            --primary-light: #a5b4fc;
+            --primary-dark: #4f46e5;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+        }
+        
+        .nav-indicator {
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            height: 2px;
+            width: 0;
+            background-color: var(--primary);
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link {
+            position: relative;
+            padding-bottom: 6px;
+        }
+        
+        .active-section .nav-indicator {
+            width: 100%;
+        }
+        
+        .active-section {
+            color: var(--primary) !important;
+            font-weight: 500;
+        }
+        
+        .mood-option {
+            transition: all 0.3s ease;
+        }
+        
+        .mood-option:hover {
+            transform: translateY(-5px);
+        }
+        
+        .mood-option.selected {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+        
+        .breathing-circle {
+            animation: pulse 8s infinite ease-in-out;
+            transform-origin: center;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.95); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(0.95); }
+        }
+        
+        /* Chat Interface Styles */
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 350px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transform: translateY(100%);
+            opacity: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        
+        .chat-container.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            color: white;
+            padding: 15px;
+            cursor: pointer;
+        }
+        
+        .chat-messages {
+            height: 300px;
+            overflow-y: auto;
+            background-color: white;
+            padding: 15px;
+        }
+        
+        .message {
+            margin-bottom: 12px;
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .user-message {
+            background-color: #e0e7ff;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .ai-message {
+            background-color: #f3f4f6;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .typing-indicator {
+            display: inline-block;
+        }
+        
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #9ca3af;
+            margin-right: 4px;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+        
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+        
+        .chat-input {
+            display: flex;
+            padding: 10px;
+            background-color: white;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .chat-input input {
+            flex-grow: 1;
+            border: 1px solid #e5e7eb;
+            border-radius: 20px;
+            padding: 10px 15px;
+            outline: none;
+        }
+        
+        .chat-input button {
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 0 15px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        
+        .chat-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+            border-radius: 50%;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: transform 0.3s ease;
+        }
+        
+        .chat-toggle:hover {
+            transform: scale(1.1);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .section {
+            padding: 80px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm py-4 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/d3bdf549-9f33-44b0-be14-df573680fbb4.png" alt="MindEase logo" class="h-10 mr-2" />
+                    <span class="text-xl font-bold text-indigo-600">MindEase</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#home" class="nav-link text-gray-700 hover:text-indigo-600 transition" data-section="home">
+                        Home
+                        <span class="nav-indicator"></span>
+                    </a>
+                    <a href="#mood" class="nav-link text-gray-700 hover:text-indigo-600 transition" data-section="mood">
+                        Mood Tracker
+                        <span class="nav-indicator"></span>
+                    </a>
+                    <a href="#exercises" class="nav-link text-gray-700 hover:text-indigo-600 transition" data-section="exercises">
+                        Exercises
+                        <span class="nav-indicator"></span>
+                    </a>
+                    <a href="#journal" class="nav-link text-gray-700 hover:text-indigo-600 transition" data-section="journal">
+                        Journal
+                        <span class="nav-indicator"></span>
+                    </a>
+                </div>
+                <button id="mobileMenuButton" class="md:hidden text-gray-700 focus:outline-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+            </div>
+            <!-- Mobile menu -->
+            <div id="mobileMenu" class="md:hidden hidden mt-4 space-y-2 transition-all duration-300 ease-in-out">
+                <a href="#home" class="block px-3 py-2 text-gray-700 hover:text-indigo-600 transition" data-section="home">Home</a>
+                <a href="#mood" class="block px-3 py-2 text-gray-700 hover:text-indigo-600 transition" data-section="mood">Mood Tracker</a>
+                <a href="#exercises" class="block px-3 py-2 text-gray-700 hover:text-indigo-600 transition" data-section="exercises">Exercises</a>
+                <a href="#journal" class="block px-3 py-2 text-gray-700 hover:text-indigo-600 transition" data-section="journal">Journal</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="gradient-bg text-white py-20 section" data-section="home">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="md:flex items-center justify-between">
+                <div class="md:w-1/2 mb-10 md:mb-0">
+                    <h1 class="text-4xl md:text-5xl font-bold mb-6">Your AI Mental Health Companion</h1>
+                    <p class="text-lg mb-8">MindEase provides personalized support to help you navigate stress, anxiety, and emotional challenges with AI-powered tools.</p>
+                    <div class="space-x-4">
+                        <a href="#mood" class="bg-white text-indigo-600 px-6 py-3 rounded-lg font-medium hover:bg-indigo-50 transition">Check Your Mood</a>
+                        <button onclick="document.getElementById('chatContainer').classList.add('active');" class="border-2 border-white text-white px-6 py-3 rounded-lg font-medium hover:bg-white hover:text-indigo-600 transition">Talk to AI</button>
+                    </div>
+                </div>
+                <div class="md:w-1/2 flex justify-center">
+                    <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/2431599a-0110-42fa-af40-c8eef235d3f6.png" alt="Illustration of a friendly AI assistant" class="rounded-lg shadow-xl w-full max-w-md" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mood Tracker -->
+    <section id="mood" class="bg-white py-20 section" data-section="mood">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Mood Tracker</h2>
+                <p class="text-lg text-gray-600">Track your emotional patterns and gain insights</p>
+            </div>
+            
+            <div class="bg-indigo-50 rounded-xl p-8 mb-12">
+                <h3 class="text-xl font-semibold text-indigo-800 mb-6 text-center">How are you feeling today?</h3>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                    <div class="mood-option flex flex-col items-center p-4 bg-white rounded-lg border-2 border-transparent cursor-pointer transition" onclick="selectMood('angry', this)">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/c5207d15-4c45-4df2-b325-53e0684e7184.png" alt="Angry face icon" class="h-16 w-16 mb-2" />
+                        <span class="text-sm font-medium">Frustrated</span>
+                    </div>
+                    <div class="mood-option flex flex-col items-center p-4 bg-white rounded-lg border-2 border-transparent cursor-pointer transition" onclick="selectMood('sad', this)">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/5f01f022-9d74-4a79-8a74-c8f1cf9356a7.png" alt="Sad face icon" class="h-16 w-16 mb-2" />
+                        <span class="text-sm font-medium">Sad</span>
+                    </div>
+                    <div class="mood-option flex flex-col items-center p-4 bg-white rounded-lg border-2 border-transparent cursor-pointer transition" onclick="selectMood('neutral', this)">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/baba3875-9171-4c70-9476-c31964742ccd.png" alt="Neutral face icon" class="h-16 w-16 mb-2" />
+                        <span class="text-sm font-medium">Neutral</span>
+                    </div>
+                    <div class="mood-option flex flex-col items-center p-4 bg-white rounded-lg border-2 border-transparent cursor-pointer transition" onclick="selectMood('happy', this)">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/9a97657e-558d-4061-b49c-180f847df084.png" alt="Happy face icon" class="h-16 w-16 mb-2" />
+                        <span class="text-sm font-medium">Happy</span>
+                    </div>
+                    <div class="mood-option flex flex-col items-center p-4 bg-white rounded-lg border-2 border-transparent cursor-pointer transition" onclick="selectMood('excited', this)">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/43804193-15a1-4f08-b813-793490216e1b.png" alt="Excited face icon" class="h-16 w-16 mb-2" />
+                        <span class="text-sm font-medium">Excited</span>
+                    </div>
+                </div>
+                
+                <div id="moodReason" class="hidden mb-4">
+                    <label for="moodNotes" class="block text-sm font-medium text-gray-700 mb-2">Tell us more (optional)</label>
+                    <textarea id="moodNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="What's contributing to this feeling?"></textarea>
+                </div>
+                
+                <div class="text-center">
+                    <button id="submitMood" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition hidden" onclick="logMood()">Submit Mood</button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h3 class="text-xl font-semibold text-indigo-800 mb-4">Your Mood History</h3>
+                <div id="moodHistory" class="bg-indigo-50 rounded-lg p-4">
+                    <canvas id="moodChart" height="200"></canvas>
+                </div>
+                <div id="moodInsights" class="mt-4 text-gray-700"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Breathing Exercise -->
+    <section id="exercises" class="bg-indigo-50 py-20 section" data-section="exercises">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Mindfulness Exercises</h2>
+                <p class="text-lg text-gray-600">Techniques to calm your mind and reduce stress</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div class="md:flex">
+                    <div class="md:w-1/2 p-8">
+                        <h3 class="text-2xl font-semibold text-indigo-800 mb-4">Box Breathing</h3>
+                        <p class="text-gray-600 mb-6">This technique helps regulate your nervous system and lower stress levels by controlling your breathing pattern.</p>
+                        
+                        <div class="bg-indigo-100 rounded-lg p-6 mb-6">
+                            <div id="breathStages">
+                                <div class="text-center mb-4">
+                                    <div class="inline-block relative">
+                                        <div class="breathing-circle h-40 w-40 bg-indigo-400 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <span id="breathText" class="text-white text-xl font-bold">Breathe In</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-4 gap-2 text-center text-sm">
+                                    <div id="inhale" class="bg-indigo-200 text-indigo-800 py-2 rounded">Inhale</div>
+                                    <div id="hold1" class="bg-indigo-200 text-indigo-800 py-2 rounded">Hold</div>
+                                    <div id="exhale" class="bg-indigo-200 text-indigo-800 py-2 rounded">Exhale</div>
+                                    <div id="hold2" class="bg-indigo-200 text-indigo-800 py-2 rounded">Hold</div>
+                                </div>
+                            </div>
+                            
+                            <div id="breathControls" class="flex justify-center mt-6">
+                                <button id="startBreathing" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition" onclick="startBreathing()">
+                                    Begin Exercise
+                                </button>
+                                <button id="pauseBreathing" class="bg-white text-indigo-600 border border-indigo-600 px-6 py-2 rounded-lg font-medium hover:bg-indigo-50 transition hidden" onclick="pauseBreathing()">
+                                    Pause
+                                </button>
+                                <button id="resetBreathing" class="bg-white text-indigo-600 border border-indigo-600 px-6 py-2 rounded-lg font-medium hover:bg-indigo-50 transition hidden ml-2" onclick="resetBreathing()">
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="md:w-1/2 p-8 border-t md:border-t-0 md:border-l border-gray-200">
+                        <h3 class="text-2xl font-semibold text-indigo-800 mb-4">Body Scan Meditation</h3>
+                        <p class="text-gray-600 mb-6">Gently bring awareness to each part of your body to release tension and stress.</p>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 text-indigo-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-600">Find a comfortable position, either sitting or lying down.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 text-indigo-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-600">Close your eyes and take 3 deep breaths.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 text-indigo-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-600">Starting from your toes, gradually move your attention up through your body.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 text-indigo-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-600">Notice any sensations but don't judge or try to change them.</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="flex-shrink-0 text-indigo-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm text-gray-600">Breathe into areas of tension, imagining them softening.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="mt-6 bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition" onclick="startGuidedMeditation()">
+                            Start Guided Meditation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Journal Section -->
+    <section id="journal" class="bg-white py-20 section" data-section="journal">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Reflective Journal</h2>
+                <p class="text-lg text-gray-600">Express your thoughts and track your emotional journey</p>
+            </div>
+            
+            <div class="bg-indigo-50 rounded-xl p-8">
+                <div>
+                    <label for="journalPrompt" class="block text-sm font-medium text-gray-700 mb-2">Today's prompt:</label>
+                    <p id="journalPrompt" class="text-indigo-700 font-medium mb-4">What's one positive thing that happened today?</p>
+                    <textarea id="journalEntry" rows="8" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" placeholder="Express your thoughts freely here..."></textarea>
+                </div>
+                
+                <div class="mt-6 flex flex-wrap gap-4">
+                    <button type="button" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition" onclick="saveJournal()">
+                        Save Entry
+                    </button>
+                    <button type="button" class="bg-white text-indigo-600 border border-indigo-600 px-6 py-2 rounded-lg font-medium hover:bg-indigo-50 transition" onclick="newPrompt()">
+                        New Prompt
+                    </button>
+                    <button type="button" class="bg-white text-indigo-600 border border-indigo-600 px-6 py-2 rounded-lg font-medium hover:bg-indigo-50 transition" onclick="showJournalHistory()">
+                        View History
+                    </button>
+                </div>
+                
+                <div id="savedJournals" class="mt-8 hidden">
+                    <h4 class="text-lg font-medium text-gray-800 mb-4">Previous Entries</h4>
+                    <div id="journalList" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Emergency Help -->
+    <section class="bg-red-50 py-12">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="md:flex items-center">
+                <div class="md:w-2/3">
+                    <h3 class="text-xl font-semibold text-red-800 mb-2">Need immediate help?</h3>
+                    <p class="text-red-600">If you're in crisis or experiencing suicidal thoughts, please reach out to these resources:</p>
+                </div>
+                <div class="md:w-1/3 mt-4 md:mt-0">
+                    <a href="tel:1-800-273-8255" class="bg-red-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-red-700 transition block text-center">
+                        Call 1-800-273-TALK (8255)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="md:flex md:justify-between">
+                <div class="mb-8 md:mb-0">
+                    <div class="flex items-center mb-4">
+                        <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/a13df840-499a-46d7-8873-78123da22a18.png" alt="MindEase logo" class="h-10 mr-2" />
+                        <span class="text-xl font-bold text-white">MindEase</span>
+                    </div>
+                    <p class="text-gray-400">Supporting your mental health journey with AI-powered tools.</p>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-8">
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Resources</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Self-Help Guides</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Stress Management</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Sleep Support</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Support</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Help Center</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Contact Us</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Feedback</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">Legal</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Disclaimer</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-gray-700 text-center text-gray-400 text-sm">
+                <p>MindEase is not a substitute for professional medical advice, diagnosis, or treatment.</p>
+                <p class="mt-2">© 2023 MindEase. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chat Interface -->
+    <div class="chat-toggle" id="chatToggle">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+        </svg>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header" id="chatHeader">
+            <h3>MindEase Assistant</h3>
+            <p class="text-sm">I'm here to listen and help</p>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message ai-message">
+                Hi there! I'm your MindEase assistant. You can talk to me about anything on your mind, or ask for help with stress, anxiety, or other emotions. How can I support you today?
+            </div>
+        </div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="Type your message here..." autocomplete="off">
+            <button id="sendButton">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // ===== NAVIGATION SYSTEM =====
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile menu toggle
+            document.getElementById('mobileMenuButton').addEventListener('click', function() {
+                const menu = document.getElementById('mobileMenu');
+                menu.classList.toggle('hidden');
+            });
+
+            // Smooth scrolling with active section highlighting
+            const sections = document.querySelectorAll('section[data-section]');
+            const navLinks = document.querySelectorAll('nav a[data-section]');
+            const mobileLinks = document.querySelectorAll('#mobileMenu a[data-section]');
+            
+            // Track scroll position to highlight active section
+            function setActiveSection() {
+                let index = sections.length;
+                
+                // Find which section is currently in view
+                while (--index >= 0 && window.scrollY + 100 < sections[index].offsetTop) {}
+                index = Math.max(0, index);
+                
+                // Update nav links
+                navLinks.forEach(link => {
+                    link.classList.remove('active-section');
+                    if (link.dataset.section === sections[index].dataset.section) {
+                        link.classList.add('active-section');
+                    }
+                });
+                
+                // Update mobile links
+                mobileLinks.forEach(link => {
+                    link.classList.remove('active-section', 'text-indigo-600');
+                    if (link.dataset.section === sections[index].dataset.section) {
+                        link.classList.add('active-section', 'text-indigo-600');
+                    }
+                });
+                
+                // Close mobile menu if open
+                const mobileMenu = document.getElementById('mobileMenu');
+                if (!mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('hidden');
+                }
+            }
+            
+            // Set initial active section
+            setActiveSection();
+            
+            // Update on scroll (with throttling)
+            let isScrolling;
+            window.addEventListener('scroll', function() {
+                window.clearTimeout(isScrolling);
+                isScrolling = setTimeout(setActiveSection, 100);
+            });
+            
+            // Enhanced smooth scrolling for nav links
+            document.querySelectorAll('nav a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    
+                    if (targetElement) {
+                        // Smooth scroll to target
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                        
+                        // Immediately update active section
+                        setTimeout(() => {
+                            setActiveSection();
+                        }, 100);
+                    }
+                });
+            });
+
+            // Initialize all app components
+            initializeAppComponents();
+        });
+
+        // ===== APP COMPONENTS INITIALIZATION =====
+        function initializeAppComponents() {
+            // Initialize mood tracking
+            if (typeof initMoodTracker === 'function') initMoodTracker();
+            
+            // Initialize journal
+            if (typeof initJournal === 'function') initJournal();
+            
+            // Activate chat after small delay
+            setTimeout(() => {
+                document.getElementById('chatContainer').classList.add('active');
+            }, 2000);
+        }
+
+        // ===== MOOD TRACKER =====
+        function initMoodTracker() {
+            let selectedMood = null;
+            const moodData = JSON.parse(localStorage.getItem('moodData')) || [
+                { day: 'Mon', mood: 'happy' },
+                { day: 'Tue', mood: 'neutral' },
+                { day: 'Wed', mood: 'sad' },
+                { day: 'Thu', mood: 'happy' },
+                { day: 'Fri', mood: 'happy' },
+                { day: 'Sat', mood: 'excited' },
+                { day: 'Sun', mood: 'neutral' }
+            ];
+            
+            const moodColors = {
+                angry: '#ef4444',
+                sad: '#3b82f6',
+                neutral: '#9ca3af',
+                happy: '#f59e0b',
+                excited: '#8b5cf6'
+            };
+            
+            window.selectMood = function(mood, element) {
+                selectedMood = mood;
+                
+                // Remove selected class from all options
+                document.querySelectorAll('.mood-option').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                
+                // Add selected class to clicked option
+                element.classList.add('selected');
+                
+                // Show additional fields
+                document.getElementById('moodReason').classList.remove('hidden');
+                document.getElementById('submitMood').classList.remove('hidden');
+            };
+            
+            window.logMood = function() {
+                const notes = document.getElementById('moodNotes').value;
+                const today = new Date().toLocaleDateString('en-US', { weekday: 'short' });
+                
+                // Add to mood data
+                moodData.push({ day: today, mood: selectedMood, notes });
+                localStorage.setItem('moodData', JSON.stringify(moodData));
+                
+                // Show confirmation
+                alert(`Thank you for sharing. Your ${selectedMood} mood has been recorded.`);
+                
+                // Reset form
+                document.getElementById('moodNotes').value = '';
+                document.querySelectorAll('.mood-option').forEach(el => {
+                    el.classList.remove('selected');
+                });
+                document.getElementById('moodReason').classList.add('hidden');
+                document.getElementById('submitMood').classList.add('hidden');
+                
+                // Update chart
+                updateMoodChart();
+                
+                // Reset selection
+                selectedMood = null;
+            };
+            
+            function updateMoodChart() {
+                const ctx = document.getElementById('moodChart').getContext('2d');
+                
+                // Destroy existing chart if it exists
+                if (window.moodChartInstance) {
+                    window.moodChartInstance.destroy();
+                }
+                
+                // Extract last 7 days of data
+                const latestMoods = moodData.slice(-7);
+                
+                window.moodChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: latestMoods.map(data => data.day),
+                        datasets: [{
+                            label: 'Your Mood',
+                            data: latestMoods.map(data => {
+                                switch(data.mood) {
+                                    case 'angry': return 1;
+                                    case 'sad': return 2;
+                                    case 'neutral': return 3;
+                                    case 'happy': return 4;
+                                    case 'excited': return 5;
+                                    default: return 3;
+                                }
+                            }),
+                            backgroundColor: latestMoods.map(data => moodColors[data.mood]),
+                            borderColor: '#4f46e5',
+                            borderWidth: 2,
+                            pointRadius: 6,
+                            pointHoverRadius: 8,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 6,
+                                ticks: {
+                                    callback: function(value) {
+                                        switch(value) {
+                                            case 1: return 'Frustrated';
+                                            case 2: return 'Sad';
+                                            case 3: return 'Neutral';
+                                            case 4: return 'Happy';
+                                            case 5: return 'Excited';
+                                            default: return '';
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        switch(context.raw) {
+                                            case 1: return 'Frustrated';
+                                            case 2: return 'Sad';
+                                            case 3: return 'Neutral';
+                                            case 4: return 'Happy';
+                                            case 5: return 'Excited';
+                                            default: return '';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Add insights based on mood data
+                generateInsights();
+            }
+            
+            function generateInsights() {
+                const latestMoods = moodData.slice(-7).map(data => data.mood);
+                const happyDays = latestMoods.filter(mood => mood === 'happy' || mood === 'excited').length;
+                const sadDays = latestMoods.filter(mood => mood === 'sad' || mood === 'angry').length;
+                
+                let insightText = '';
+                
+                if (happyDays >= 5) {
+                    insightText = "You've been feeling positive most days! That's wonderful. Reflect on what's contributing to these good feelings—it might help during tougher times.";
+                } else if (happyDays > sadDays) {
+                    insightText = "You've had more good days than difficult ones recently. Remember, it's okay to have ups and downs—each day is a new opportunity.";
+                } else if (sadDays > happyDays) {
+                    insightText = "I notice you've had some tough days recently. Would you like to try some breathing exercises or journaling to process these feelings?";
+                } else {
+                    insightText = "Your mood has been balanced recently. Tracking helps build awareness—notice any patterns in what affects how you feel.";
+                }
+                
+                document.getElementById('moodInsights').innerHTML = `
+                    <div class="bg-indigo-100 rounded-lg p-4">
+                        <h4 class="font-medium text-indigo-800 mb-2">Weekly Insights</h4>
+                        <p>${insightText}</p>
+                    </div>
+                `;
+            }
+            
+            // Initial chart render
+            updateMoodChart();
+        }
+
+        // ===== BREATHING EXERCISE =====
+        let breathInterval;
+        let isBreathing = false;
+        const breathStages = ['Inhale', 'Hold', 'Exhale', 'Hold'];
+        const breathTimes = [4, 4, 4, 4];
+        let currentStage = 0;
+        let timeLeft = breathTimes[0];
+        
+        window.startBreathing = function() {
+            if (isBreathing) return;
+            
+            isBreathing = true;
+            document.getElementById('startBreathing').classList.add('hidden');
+            document.getElementById('pauseBreathing').classList.remove('hidden');
+            document.getElementById('resetBreathing').classList.remove('hidden');
+            
+            updateBreathStage(0);
+            
+            breathInterval = setInterval(() => {
+                timeLeft--;
+                
+                if (timeLeft <= 0) {
+                    currentStage = (currentStage + 1) % breathStages.length;
+                    timeLeft = breathTimes[currentStage];
+                    updateBreathStage(currentStage);
+                }
+            }, 1000);
+        };
+        
+        window.pauseBreathing = function() {
+            if (!isBreathing) return;
+            
+            clearInterval(breathInterval);
+            isBreathing = false;
+            document.getElementById('pauseBreathing').classList.add('hidden');
+            document.getElementById('startBreathing').classList.remove('hidden');
+            document.getElementById('startBreathing').textContent = 'Resume';
+        };
+        
+        window.resetBreathing = function() {
+            clearInterval(breathInterval);
+            isBreathing = false;
+            currentStage = 0;
+            timeLeft = breathTimes[0];
+            
+            document.getElementById('startBreathing').textContent = 'Begin Exercise';
+            document.getElementById('startBreathing').classList.remove('hidden');
+            document.getElementById('pauseBreathing').classList.add('hidden');
+            document.getElementById('resetBreathing').classList.add('hidden');
+            
+            document.querySelectorAll('#inhale, #hold1, #exhale, #hold2').forEach(el => {
+                el.classList.remove('bg-indigo-600', 'text-white');
+                el.classList.add('bg-indigo-200', 'text-indigo-800');
+            });
+            
+            document.getElementById('breathText').textContent = 'Breathe In';
+            document.querySelector('.breathing-circle').style.transform = 'scale(0.95)';
+        };
+        
+        function updateBreathStage(stage) {
+            // Reset all stage highlights
+            document.querySelectorAll('#inhale, #hold1, #exhale, #hold2').forEach(el => {
+                el.classList.remove('bg-indigo-600', 'text-white');
+                el.classList.add('bg-indigo-200', 'text-indigo-800');
+            });
+            
+            // Highlight current stage
+            if (stage === 0) {
+                document.getElementById('inhale').classList.remove('bg-indigo-200', 'text-indigo-800');
+                document.getElementById('inhale').classList.add('bg-indigo-600', 'text-white');
+                document.getElementById('breathText').textContent = 'Breathe In';
+            } else if (stage === 1) {
+                document.getElementById('hold1').classList.remove('bg-indigo-200', 'text-indigo-800');
+                document.getElementById('hold1').classList.add('bg-indigo-600', 'text-white');
+                document.getElementById('breathText').textContent = 'Hold';
+            } else if (stage === 2) {
+                document.getElementById('exhale').classList.remove('bg-indigo-200', 'text-indigo-800');
+                document.getElementById('exhale').classList.add('bg-indigo-600', 'text-white');
+                document.getElementById('breathText').textContent = 'Exhale';
+            } else {
+                document.getElementById('hold2').classList.remove('bg-indigo-200', 'text-indigo-800');
+                document.getElementById('hold2').classList.add('bg-indigo-600', 'text-white');
+                document.getElementById('breathText').textContent = 'Hold';
+            }
+        }
+        
+        window.startGuidedMeditation = function() {
+            alert("Starting guided body scan meditation. Find a comfortable position and follow along with the instructions.");
+            // In a real app, this would connect to an audio guide
+        };
+
+        // ===== JOURNAL =====
+        function initJournal() {
+            const journalPrompts = [
+                "What's one positive thing that happened today?",
+                "Describe a challenge you faced and how you handled it.",
+                "What are three things you're grateful for right now?",
+                "Write about a moment when you felt proud of yourself.",
+                "What emotions have you felt most strongly today?",
+                "Describe your perfect day from start to finish.",
+                "What's something you've been avoiding that you need to address?",
+                "Write a letter to your future self."
+            ];
+            
+            let journalEntries = JSON.parse(localStorage.getItem('journalEntries')) || [];
+            
+            window.saveJournal = function() {
+                const entry = document.getElementById('journalEntry').value;
+                if (!entry.trim()) {
+                    alert('Please write something before saving.');
+                    return;
+                }
+                
+                const prompt = document.getElementById('journalPrompt').textContent;
+                const date = new Date().toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                journalEntries.push({ prompt, entry, date });
+                localStorage.setItem('journalEntries', JSON.stringify(journalEntries));
+                
+                document.getElementById('journalEntry').value = '';
+                updateJournalList();
+                
+                if (journalEntries.length === 1) {
+                    document.getElementById('savedJournals').classList.remove('hidden');
+                }
+                
+                // Show confirmation message
+                const messages = [
+                    "Nice reflection!",
+                    "Journaling helps process emotions - great job!",
+                    "Thanks for sharing your thoughts.",
+                    "Your insight is valuable.",
+                    "Writing helps gain perspective - keep it up!"
+                ];
+                alert(messages[Math.floor(Math.random() * messages.length)]);
+            };
+            
+            window.newPrompt = function() {
+                const currentPrompt = document.getElementById('journalPrompt').textContent;
+                let newPrompt;
+                
+                do {
+                    newPrompt = journalPrompts[Math.floor(Math.random() * journalPrompts.length)];
+                } while (newPrompt === currentPrompt && journalPrompts.length > 1);
+                
+                document.getElementById('journalPrompt').textContent = newPrompt;
+                document.getElementById('journalEntry').value = '';
+                document.getElementById('journalEntry').focus();
+            };
+            
+            window.showJournalHistory = function() {
+                const journalHistory = document.getElementById('savedJournals');
+                journalHistory.classList.toggle('hidden');
+                if (!journalHistory.classList.contains('hidden')) {
+                    updateJournalList();
+                }
+            };
+            
+            function updateJournalList() {
+                const list = document.getElementById('journalList');
+                list.innerHTML = '';
+                
+                // Show last 5 entries in reverse chronological order
+                const recentEntries = journalEntries.slice().reverse().slice(0, 5);
+                
+                recentEntries.forEach((item) => {
+                    const entryDiv = document.createElement('div');
+                    entryDiv.className = 'bg-white p-4 rounded-lg border border-gray-200';
+                    entryDiv.innerHTML = `
+                        <p class="text-sm text-gray-500 mb-1">${item.date}</p>
+                        <p class="font-medium text-indigo-700 mb-2">${item.prompt}</p>
+                        <p class="text-sm text-gray-700">${truncateText(item.entry, 100)}</p>
+                    `;
+                    list.appendChild(entryDiv);
+                });
+            }
+            
+            function truncateText(text, maxLength) {
+                if (text.length <= maxLength) return text;
+                return text.substring(0, maxLength) + '...';
+            }
+            
+            // Initialize with first prompt
+            window.newPrompt();
+        }
+
+        // ===== AI CHAT ASSISTANT =====
+        const chatToggle = document.getElementById('chatToggle');
+        const chatContainer = document.getElementById('chatContainer');
+        const chatHeader = document.getElementById('chatHeader');
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+
+        chatToggle.addEventListener('click', function() {
+            chatContainer.classList.toggle('active');
+        });
+
+        chatHeader.addEventListener('click', function() {
+            chatContainer.classList.remove('active');
+        });
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (message === '') return;
+
+            // Add user message to chat
+            addMessage(message, 'user');
+            userInput.value = '';
+
+            // Show typing indicator
+            const typingIndicator = document.createElement('div');
+            typingIndicator.className = 'message ai-message typing-indicator';
+            typingIndicator.innerHTML = `
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+            `;
+            chatMessages.appendChild(typingIndicator);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            // Generate AI response after a delay
+            setTimeout(() => {
+                // Remove typing indicator
+                typingIndicator.remove();
+                
+                // Generate and show AI response
+                const aiResponse = generateAIResponse(message);
+                addMessage(aiResponse, 'ai');
+                
+                // Scroll to bottom
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 1500 + Math.random() * 1000);
+        }
+
+        // Handle send button click and Enter key
+        sendButton.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Add message to chat with animation
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', sender + '-message');
+            messageDiv.textContent = text;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // AI Response Generator with mental health focus
+        function generateAIResponse(userMessage) {
+            userMessage = userMessage.toLowerCase();
+            
+            // Common mental health responses
+            if (userMessage.includes('hello') || userMessage.includes('hi') || userMessage.includes('hey')) {
+                return "Hello! I'm here to support you. How are you feeling today?";
+            } 
+            if (userMessage.includes('sad') || userMessage.includes('depressed') || userMessage.includes('unhappy')) {
+                return "I'm sorry you're feeling this way. Remember that emotions are temporary. Would you like to try a breathing exercise or talk more about what's troubling you?";
+            } 
+            if (userMessage.includes('anxious') || userMessage.includes('nervous') || userMessage.includes('stressed')) {
+                return "Anxiety can feel overwhelming. Try the box breathing exercise in the Exercises section—it can help calm your nervous system. Do you want to talk about what's causing your anxiety?";
+            } 
+            if (userMessage.includes('angry') || userMessage.includes('frustrated') || userMessage.includes('mad')) {
+                return "Anger is a natural emotion, but it can be challenging. Try taking a few deep breaths before responding. Would you like to explore what triggered this feeling?";
+            } 
+            if (userMessage.includes('overwhelmed') || userMessage.includes('too much')) {
+                return "When things feel overwhelming, try breaking tasks into smaller steps. You might also find journaling helpful—it's in the Journal section. What specifically feels overwhelming right now?";
+            } 
+            if (userMessage.includes('exercise') || userMessage.includes('breath') || userMessage.includes('breathe')) {
+                return "The box breathing exercise is great for relaxation. Go to the Exercises section or I can guide you through it now: Inhale for 4, hold for 4, exhale for 4, hold for 4. Ready to try?";
+            } 
+            if (userMessage.includes('journal') || userMessage.includes('write') || userMessage.includes('reflect')) {
+                return "Journaling helps process emotions. In the Journal section, you'll find prompts to guide your writing. Would you like me to suggest a journal prompt now?";
+            } 
+            if (userMessage.includes('mood') || userMessage.includes('track') || userMessage.includes('feeling')) {
+                return "Tracking your mood helps identify patterns. Check the Mood Tracker section to log how you're feeling. Would you like to describe your current mood to me?";
+            } 
+            if (userMessage.includes('sleep') || userMessage.includes('tired') || userMessage.includes('insomnia')) {
+                return "Sleep issues can affect mental health. Try establishing a calming bedtime routine—no screens, dim lights, maybe some gentle stretching or deep breathing. Would you like some relaxation techniques?";
+            } 
+            if (userMessage.includes('help') || userMessage.includes('support')) {
+                return "I'm here to help. I can guide you through exercises, suggest journal prompts, or just listen. What would be most helpful right now?";
+            } 
+            if (userMessage.includes('thank') || userMessage.includes('thanks')) {
+                return "You're very welcome! Remember I'm here whenever you need support.";
+            }
+            if (userMessage.includes('emergency') || userMessage.includes('crisis') || userMessage.includes('suicid')) {
+                return "If you're in crisis, please call emergency services or 1-800-273-TALK (8255) immediately for 24/7 support from trained counselors. Your safety is important.";
+            }
+            
+            // Fallback responses
+            const fallbacks = [
+                "I hear you. Would you like to tell me more about that?",
+                "That sounds important. How does this make you feel?",
+                "Thank you for sharing. What else is on your mind?",
+                "I'm here to listen. Would you like to explore this further?",
+                "I understand this is significant for you. What support would help right now?"
+            ];
+            
+            return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        }
+
+        // Initialize all components
+        initializeAppComponents();
+    </script>
+</body>
+</html>
+
